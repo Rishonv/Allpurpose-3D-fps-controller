@@ -168,6 +168,7 @@ public class PlayerMovement : MonoBehaviour
             moveSpeed = Mathf.Lerp(startValue, targetMoveSpeed, time /difference);
             if (OnSlope()){
                 float slopeAngle = Vector3.Angle(Vector3.up, slopeHit.normal);
+                // Builds speed based on how steep the angle is
                 float slopeAngleIncrease = 1 + (slopeAngle/90f);
                 time += Time.deltaTime * speedIncreaseMultiplier * slopeIncreaseMultiplier * slopeAngleIncrease;
             }else time += Time.deltaTime * speedIncreaseMultiplier;

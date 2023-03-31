@@ -41,6 +41,7 @@ public class PlayerMovement : MonoBehaviour
 
     [Header ("Slope Handler")]
     public float maxSlopeAngle;
+    //Returns information of the collider it has hit - like type, body
     private RaycastHit slopeHit;
     private bool exitingSlope;
 
@@ -84,12 +85,14 @@ public class PlayerMovement : MonoBehaviour
     public bool isSliding;
 
     private void MyInput(){
+        // Gets inputs for basic "walking" movement
         horizontalInput = Input.GetAxisRaw("Horizontal");
         verticalInput = Input.GetAxisRaw("Vertical");
 
         if (Input.GetKey(jumpKey)&& readyToJump && grounded){
             readyToJump = false;
             Jump();
+            // Allows player to continually jump when pressing the jump key down
             Invoke(nameof(ResetJump), jumpCooldown);
         }
 
@@ -105,15 +108,17 @@ public class PlayerMovement : MonoBehaviour
     }
 
     private void MovePlayer(){
+        // Makes sure you move in the direction you're looking in
         moveDirection = orientation.forward * verticalInput + 
             orientation.right * horizontalInput;
 
         if (OnSlope() && !exitingSlope){
             rb.AddForce(GetSlopeMoveDirection(moveDirection)* moveSpeed * 20f, ForceMode.Force);
-            rb.AddForce(Vector3.down * 80f, ForceMode.Force);
+            if (rb.velocity.y > 0) rb.AddForce(Vector3.down * 80f, ForceMode.Force);
         }
         else if (grounded) rb.AddForce(moveDirection.normalized * moveSpeed * 10f, ForceMode.Force);
         else if (!grounded) rb.AddForce(moveDirection.normalized * moveSpeed * 10f * airMultiplier, ForceMode.Force);
+        rb.useGravity = !OnSlope();
     }
 
     private void StateHandler(){
@@ -176,6 +181,7 @@ public class PlayerMovement : MonoBehaviour
                 rb.velocity = rb.velocity.normalized * moveSpeed;
             }
         }else {
+            // Limits the velocity to what your set speed is
             Vector3 flatVel = new Vector3(rb.velocity.x, 0, rb.velocity.z);
             if (flatVel.magnitude > moveSpeed){
                 Vector3 limitedVel = flatVel.normalized * moveSpeed;
@@ -199,13 +205,16 @@ public class PlayerMovement : MonoBehaviour
     public bool OnSlope(){
         if (Physics.Raycast(transform.position, Vector3.down, out slopeHit, playerHeight *0.5f +0.3f)){
             float angle = Vector3.Angle(Vector3.up, slopeHit.normal);
-            return angle > maxSlopeAngle && angle != 0;
+            return angle < maxSlopeAngle && angle != 0;
+            //Debug.Log(angle);
         }
         return false;
     }
 
     // Changes the forward movement of your force to an angle parallel to the slope
     public Vector3 GetSlopeMoveDirection(Vector3 direction){
+        // ProjectOnPlane simply take the normal and a vector that's above the plane
         return Vector3.ProjectOnPlane(direction, slopeHit.normal).normalized ;
+        //normalized keeps the direction of the vector but sets length to 1
     }
 }
